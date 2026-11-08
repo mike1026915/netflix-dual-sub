@@ -2,6 +2,9 @@ const PROFILES = ['webvtt-lssdh-ios8', 'imsc1.1', 'dfxp-ls-sdh'];
 const cfg = () => { try { return JSON.parse(document.documentElement.dataset.dualSub); } catch { return { a: 'zh-Hant', b: 'en', on: true }; } };
 
 let tracks = null;
+let loadedId = null;
+const manifests = {}; // movieId -> textTracks
+const currentId = () => +location.pathname.match(/\/watch\/(\d+)/)?.[1];
 let cues = [[], []];
 
 // Ask Netflix for WebVTT subs too
@@ -16,7 +19,9 @@ const origParse = JSON.parse;
 JSON.parse = function (...a) {
   const r = origParse.apply(this, a);
   const tt = r?.result?.textTracks || r?.result?.timedtexttracks; // Netflix renamed the field in newer manifests
-  if (tt) { tracks = tt; reload(); }
+  // Netflix prefetches the NEXT episode's manifest near the end, so key by movieId
+  // instead of taking whichever manifest arrived last.
+  if (tt && r.result.movieId) manifests[r.result.movieId] = tt;
   return r;
 };
 window.addEventListener('dual-sub-langs', () => tracks && reload());
@@ -68,6 +73,8 @@ box.style.cssText = 'position:absolute;bottom:10%;left:0;right:0;text-align:cent
 const lines = [0, 1].map(() => box.appendChild(document.createElement('div')));
 lines[1].style.cssText = 'color:#ffd54f;font-size:0.85em';
 setInterval(() => {
+  const id = currentId();
+  if (id !== loadedId && manifests[id]) { loadedId = id; tracks = manifests[id]; reload(); }
   box.style.display = cfg().on ? '' : 'none';
   const v = document.querySelector('video');
   if (!v) return;
