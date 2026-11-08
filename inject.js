@@ -1,5 +1,5 @@
 const PROFILES = ['webvtt-lssdh-ios8', 'imsc1.1', 'dfxp-ls-sdh'];
-const langs = () => { try { return JSON.parse(document.documentElement.dataset.dualSub); } catch { return ['zh-Hant', 'en']; } };
+const cfg = () => { try { return JSON.parse(document.documentElement.dataset.dualSub); } catch { return { a: 'zh-Hant', b: 'en', on: true }; } };
 
 let tracks = null;
 let cues = [[], []];
@@ -22,7 +22,7 @@ JSON.parse = function (...a) {
 window.addEventListener('dual-sub-langs', () => tracks && reload());
 
 function reload() {
-  langs().forEach((l, i) => load(l).then(c => cues[i] = c).catch(e => { cues[i] = []; console.warn('[dual-sub]', e); }));
+  [cfg().a, cfg().b].forEach((l, i) => load(l).then(c => cues[i] = c).catch(e => { cues[i] = []; console.warn('[dual-sub]', e); }));
 }
 
 async function load(lang) {
@@ -68,6 +68,7 @@ box.style.cssText = 'position:absolute;bottom:10%;left:0;right:0;text-align:cent
 const lines = [0, 1].map(() => box.appendChild(document.createElement('div')));
 lines[1].style.cssText = 'color:#ffd54f;font-size:0.85em';
 setInterval(() => {
+  box.style.display = cfg().on ? '' : 'none';
   const v = document.querySelector('video');
   if (!v) return;
   const host = v.closest('.watch-video') || v.parentElement;
