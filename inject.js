@@ -15,7 +15,8 @@ JSON.stringify = function (v, ...a) {
 const origParse = JSON.parse;
 JSON.parse = function (...a) {
   const r = origParse.apply(this, a);
-  if (r?.result?.timedtexttracks) { tracks = r.result.timedtexttracks; reload(); }
+  const tt = r?.result?.textTracks || r?.result?.timedtexttracks; // Netflix renamed the field in newer manifests
+  if (tt) { tracks = tt; reload(); }
   return r;
 };
 window.addEventListener('dual-sub-langs', () => tracks && reload());
@@ -30,8 +31,9 @@ async function load(lang) {
   const t = tracks.find(t => ok(t) && t.language === lang)
          || tracks.find(t => ok(t) && t.language?.startsWith(lang.split('-')[0]));
   if (!t) throw `no track for ${lang}; available: ${tracks.map(t => t.language)}`;
-  const p = PROFILES.find(p => t.ttDownloadables?.[p]);
-  const d = t.ttDownloadables[p];
+  const dl = t.downloadables || t.ttDownloadables;
+  const p = PROFILES.find(p => dl?.[p]);
+  const d = dl[p];
   const url = d.urls?.[0]?.url || Object.values(d.downloadUrls || {})[0];
   const text = await (await fetch(url)).text();
   return p.startsWith('webvtt') ? parseVtt(text) : parseTtml(text);
