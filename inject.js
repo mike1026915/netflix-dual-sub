@@ -52,7 +52,7 @@ function parseVtt(text) {
     const i = lines.findIndex(l => l.includes('-->'));
     if (i < 0) return [];
     const [s, e] = lines[i].split('-->').map(x => ts(x.trim().split(' ')[0]));
-    return [{ s, e, txt: lines.slice(i + 1).join('\n').replace(/<[^>]+>/g, '') }];
+    return [{ s, e, txt: lines.slice(i + 1).join('\n').replace(/<[^>]+>/g, '').replace(/&[lr]rm;/g, '') }];
   });
 }
 
